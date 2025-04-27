@@ -1,0 +1,1 @@
+# SwiftFormatic-2.0
