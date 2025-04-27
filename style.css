@@ -1,0 +1,65 @@
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: linear-gradient(to bottom right, #e0f7fa, #ffffff);
+  color: #333;
+}
+
+header {
+  text-align: center;
+  padding: 2rem;
+  background-color: #00bcd4;
+  color: white;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+}
+
+header p {
+  margin: 0.5rem 0 0;
+  font-size: 1.2rem;
+}
+
+.tools, .coming-soon {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.tool-button {
+  background-color: #00acc1;
+  color: white;
+  padding: 1rem 2rem;
+  margin: 0.5rem;
+  text-decoration: none;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.tool-button:hover {
+  background-color: #00838f;
+}
+
+.disabled {
+  background-color: #b2ebf2;
+  color: #777;
+  pointer-events: none;
+}
+
+footer {
+  text-align: center;
+  padding: 1rem;
+  background-color: #00bcd4;
+  color: white;
+  margin-top: 2rem;
+}
+
+@media (max-width: 600px) {
+  .tool-button {
+    width: 80%;
+  }
+}
