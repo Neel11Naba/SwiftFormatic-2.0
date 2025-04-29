@@ -1,134 +1,186 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Compress PDF - SwiftFormatic</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compress PDF - SwiftFormatic 2.0</title>
+
+    <!-- Inline Styles for the Page -->
     <style>
+        /* Global Styles */
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: linear-gradient(to right, #c9d6ff, #e2e2e2);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
+            font-family: Arial, sans-serif;
             margin: 0;
-        }
-        h1 {
-            margin-bottom: 20px;
+            padding: 0;
+            background-color: #f0f4f7;
             color: #333;
         }
-        .upload-box {
-            border: 2px dashed #555;
-            padding: 40px;
-            background: #fff;
-            border-radius: 10px;
+
+        header {
+            background: #4CAF50;
+            color: white;
+            padding: 20px;
             text-align: center;
-            width: 90%;
-            max-width: 400px;
         }
-        .upload-box.dragover {
-            background: #e3f2fd;
-            border-color: #1e88e5;
+
+        footer {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
         }
-        input[type="file"] {
-            display: none;
+
+        .compress-container {
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
         }
-        .file-label {
-            display: block;
-            margin: 15px 0;
-            font-weight: bold;
+
+        .compress-container h1 {
             color: #333;
         }
-        select, button {
-            margin-top: 10px;
-            padding: 10px;
+
+        .drop-area {
             width: 100%;
+            height: 200px;
+            border: 2px dashed #ccc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            text-align: center;
+            cursor: pointer;
+            margin: 20px 0;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+        }
+
+        .drop-area.drag-over {
+            background-color: #e9e9e9;
+            border-color: #333;
+        }
+
+        .file-input {
+            display: none; /* Hides the file input button */
+        }
+
+        .submit-btn {
+            padding: 12px 30px;
+            background-color: #5cb85c;
+            color: white;
             border: none;
             border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
             font-size: 16px;
         }
-        button {
-            background-color: #4caf50;
-            color: white;
-            cursor: pointer;
+
+        .submit-btn:hover {
+            background-color: #4cae4c;
         }
-        button:hover {
-            background-color: #45a049;
+
+        #result-container {
+            margin-top: 20px;
+            font-size: 18px;
         }
-        footer {
-            margin-top: 40px;
-            text-align: center;
-            font-size: 14px;
-            color: #666;
+
+        #result-container a {
+            color: #5cb85c;
+            text-decoration: none;
+            font-weight: bold;
         }
+
+        #result-container a:hover {
+            text-decoration: underline;
+        }
+
     </style>
 </head>
 <body>
 
-    <h1>Compress PDF</h1>
-    <div class="upload-box" id="drop-area">
-        <label class="file-label" for="fileElem">Choose or drop a PDF file</label>
-        <input type="file" id="fileElem" accept="application/pdf"/>
-        <select id="quality">
-            <option value="low">Low Compression (Better Quality)</option>
-            <option value="medium">Medium Compression</option>
-            <option value="high">High Compression (Smaller Size)</option>
-        </select>
-        <button onclick="compressPDF()">Compress</button>
-    </div>
+    <header>
+        <h1>Compress PDF</h1>
+    </header>
 
-    <footer>&copy; 2025 SwiftFormatic. All rights reserved.</footer>
+    <section class="compress-container">
+        <!-- Drag-and-Drop Area -->
+        <div id="drop-area" class="drop-area">
+            <p>Drag & Drop your PDF here or</p>
+            <input type="file" id="file" name="file" accept="application/pdf" class="file-input" required>
+            <span>or select a file</span>
+        </div>
+        
+        <form id="compress-form" enctype="multipart/form-data">
+            <button type="submit" class="submit-btn">Compress PDF</button>
+        </form>
 
-    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+        <div id="result-container"></div>
+    </section>
+
+    <footer>
+        <p>SwiftFormatic 2.0 - All Rights Reserved</p>
+    </footer>
+
     <script>
         const dropArea = document.getElementById('drop-area');
-        const fileElem = document.getElementById('fileElem');
-
-        dropArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropArea.classList.add('dragover');
+        const fileInput = document.getElementById('file');
+        const resultContainer = document.getElementById('result-container');
+        
+        // Prevent default behavior when dragging over the drop area
+        dropArea.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropArea.classList.add('drag-over');
         });
 
         dropArea.addEventListener('dragleave', () => {
-            dropArea.classList.remove('dragover');
+            dropArea.classList.remove('drag-over');
         });
 
-        dropArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropArea.classList.remove('dragover');
-            fileElem.files = e.dataTransfer.files;
-        });
-
-        function compressPDF() {
-            const file = fileElem.files[0];
-            const quality = document.getElementById('quality').value;
-
-            if (!file || file.type !== 'application/pdf') {
-                alert("Please select a valid PDF file.");
-                return;
+        dropArea.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropArea.classList.remove('drag-over');
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;  // Set the file input to the dropped file
             }
+        });
 
-            const reader = new FileReader();
-            reader.onload = async function () {
-                const existingPdfBytes = new Uint8Array(reader.result);
-                const pdfDoc = await PDFLib.PDFDocument.load(existingPdfBytes);
+        document.getElementById("compress-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById("file");
+            formData.append("file", fileInput.files[0]);
 
-                const pdfBytes = await pdfDoc.save({ useObjectStreams: false });
-
-                const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-                const link = document.createElement('a');
-                link.href = URL.createObjectURL(blob);
-                link.download = 'compressed.pdf';
-                link.click();
-
-                setTimeout(() => {
-                    location.reload();
-                }, 1000);
-            };
-            reader.readAsArrayBuffer(file);
-        }
+            fetch("/api/compress-pdf", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const downloadLink = document.createElement("a");
+                    downloadLink.href = data.compressedFileUrl;
+                    downloadLink.textContent = "Download Compressed PDF";
+                    downloadLink.target = "_blank";
+                    resultContainer.appendChild(downloadLink);
+                } else {
+                    resultContainer.innerText = "Compression failed.";
+                }
+            })
+            .catch(error => {
+                resultContainer.innerText = "Error occurred.";
+                console.error(error);
+            });
+        });
     </script>
+
 </body>
 </html>
