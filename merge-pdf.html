@@ -1,134 +1,139 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Merge PDF - SwiftFormatic</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #c2e9fb, #a1c4fd);
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    h1 {
-      color: #333;
-      margin-bottom: 20px;
-    }
-    .drop-zone {
-      border: 2px dashed #333;
-      padding: 40px;
-      border-radius: 10px;
-      background: #fff;
-      text-align: center;
-      width: 90%;
-      max-width: 500px;
-      margin-bottom: 20px;
-    }
-    .drop-zone.dragover {
-      border-color: #4a90e2;
-      background: #f0f8ff;
-    }
-    input[type="file"] {
-      display: none;
-    }
-    label {
-      display: inline-block;
-      background-color: #4a90e2;
-      color: white;
-      padding: 10px 20px;
-      border-radius: 5px;
-      cursor: pointer;
-      margin-top: 10px;
-    }
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      font-size: 16px;
-      border: none;
-      background-color: #27ae60;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #219150;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Merger - SwiftFormatic 2.0</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f2f4f7, #fff);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            background-color: #6a82fb;
+            color: white;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        main {
+            margin: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 90%;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        button {
+            background-color: #6a82fb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #5c6bc0;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+            color: #777;
+        }
+        /* Popup styles */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            z-index: 10;
+        }
+        .popup button {
+            background-color: #ff5733;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .popup button:hover {
+            background-color: #e04e23;
+        }
+    </style>
 </head>
 <body>
-  <h1>Merge PDF Files</h1>
-  <div class="drop-zone" id="drop-zone">
-    Drag & Drop PDFs here or
-    <label for="file-input">Select Files</label>
-    <input type="file" id="file-input" multiple accept="application/pdf">
-  </div>
-  <button onclick="mergePDFs()">Merge & Download</button>
+    <header>PDF Merger Tool</header>
+    <main>
+        <p>Select multiple PDFs to merge:</p>
+        <input type="file" id="pdfFiles" accept=".pdf" multiple />
+        <button onclick="mergePDF()">Merge PDFs</button>
+    </main>
+    <footer>SwiftFormatic 2.0 | All processing is done offline in your browser</footer>
 
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-  <script>
-    const input = document.getElementById("file-input");
-    const dropZone = document.getElementById("drop-zone");
-    let pdfFiles = [];
+    <!-- Success popup -->
+    <div id="successPopup" class="popup">
+        <p id="popupMessage"></p>
+        <button onclick="closePopup()">OK</button>
+    </div>
 
-    dropZone.addEventListener("dragover", e => {
-      e.preventDefault();
-      dropZone.classList.add("dragover");
-    });
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script>
+        async function mergePDF() {
+            const fileInput = document.getElementById('pdfFiles');
+            const files = fileInput.files;
+            
+            if (files.length < 2) {
+                alert('Please select at least two PDFs to merge.');
+                return;
+            }
 
-    dropZone.addEventListener("dragleave", () => {
-      dropZone.classList.remove("dragover");
-    });
+            const mergedPdf = await PDFLib.PDFDocument.create();
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileArrayBuffer = await file.arrayBuffer();
+                const pdf = await PDFLib.PDFDocument.load(fileArrayBuffer);
+                const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPages().map((_, index) => index));
+                copiedPages.forEach(page => mergedPdf.addPage(page));
+            }
 
-    dropZone.addEventListener("drop", e => {
-      e.preventDefault();
-      dropZone.classList.remove("dragover");
-      handleFiles(e.dataTransfer.files);
-    });
-
-    input.addEventListener("change", () => {
-      handleFiles(input.files);
-    });
-
-    function handleFiles(files) {
-      for (let file of files) {
-        if (file.type === "application/pdf") {
-          pdfFiles.push(file);
+            const mergedPdfBytes = await mergedPdf.save();
+            const blob = new Blob([mergedPdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'merged-pdf.pdf';
+            a.click();
+            
+            // Show the success popup
+            const popup = document.getElementById('successPopup');
+            const message = document.getElementById('popupMessage');
+            message.textContent = 'Merge Successful! Your merged file is "merged-pdf.pdf".';
+            popup.style.display = 'block';
         }
-      }
-      alert(`${pdfFiles.length} PDF file(s) ready to merge.`);
-    }
 
-    async function mergePDFs() {
-      if (pdfFiles.length < 2) {
-        alert("Please add at least two PDF files to merge.");
-        return;
-      }
-
-      const mergedPdf = await PDFLib.PDFDocument.create();
-
-      for (let file of pdfFiles) {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await PDFLib.PDFDocument.load(arrayBuffer);
-        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-        copiedPages.forEach(page => mergedPdf.addPage(page));
-      }
-
-      const mergedPdfBytes = await mergedPdf.save();
-      const blob = new Blob([mergedPdfBytes], { type: "application/pdf" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "merged.pdf";
-      link.click();
-
-      pdfFiles = [];
-    }
-  </script>
+        function closePopup() {
+            const popup = document.getElementById('successPopup');
+            popup.style.display = 'none';
+        }
+    </script>
 </body>
 </html>
