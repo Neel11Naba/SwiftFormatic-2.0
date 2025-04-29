@@ -1,22 +1,68 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image to Excel Converter</title>
+    <title>Image to Excel - SwiftFormatic 2.0</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="tool-page">
     <header>
         <h1>Image to Excel Converter</h1>
     </header>
-    <div class="content">
-        <p>Select an image to convert it to an Excel file.</p>
-        <!-- Form for converting image to Excel -->
-        <input type="file" id="imageToExcelInput" accept="image/*">
-        <button id="convertButton">Convert</button>
-    </div>
-    <script src="script.js"></script>
+
+    <main>
+        <section class="tool-container">
+            <input type="file" id="imageUpload" accept="image/*">
+            <button onclick="convertImageToExcel()">Convert to Excel</button>
+            <br><br>
+            <a id="downloadLink" style="display:none;">Download Excel</a>
+        </section>
+    </main>
+
+    <footer>
+        <p>SwiftFormatic 2.0 &copy; 2025. All rights reserved.</p>
+    </footer>
+
+    <script>
+        function convertImageToExcel() {
+            const fileInput = document.getElementById('imageUpload');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select an image.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const imageBase64 = event.target.result;
+
+                const htmlContent = `
+                    <html xmlns:x="urn:schemas-microsoft-com:office:excel">
+                        <head>
+                            <meta charset="UTF-8">
+                        </head>
+                        <body>
+                            <table>
+                                <tr>
+                                    <td><img src="${imageBase64}" style="max-width:100%;"></td>
+                                </tr>
+                            </table>
+                        </body>
+                    </html>
+                `;
+
+                const blob = new Blob(['\ufeff', htmlContent], { type: 'application/vnd.ms-excel' });
+
+                const downloadLink = document.getElementById('downloadLink');
+                downloadLink.href = URL.createObjectURL(blob);
+                downloadLink.download = 'converted.xls';
+                downloadLink.style.display = 'inline-block';
+                downloadLink.textContent = 'Download Excel';
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
 </body>
 </html>
