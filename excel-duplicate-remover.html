@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Excel Duplicate Remover - SwiftFormatic 2.0</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f2f4f7, #fff);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        header {
+            background-color: #6a82fb;
+            color: white;
+            padding: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+        main {
+            margin: 20px;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 90%;
+        }
+        input[type="file"] {
+            margin: 10px 0;
+        }
+        button {
+            background-color: #6a82fb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #5c6bc0;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+            color: #777;
+        }
+        /* Popup styles */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ffffff;
+            padding: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            z-index: 10;
+        }
+        .popup button {
+            background-color: #ff5733;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .popup button:hover {
+            background-color: #e04e23;
+        }
+    </style>
+</head>
+<body>
+    <header>Excel Duplicate Remover</header>
+    <main>
+        <p>Select an Excel file to remove duplicates:</p>
+        <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" />
+        <button onclick="removeDuplicates()">Remove Duplicates</button>
+    </main>
+    <footer>SwiftFormatic 2.0 | All processing is done offline in your browser</footer>
+
+    <!-- Success popup -->
+    <div id="successPopup" class="popup">
+        <p id="popupMessage"></p>
+        <button onclick="closePopup()">OK</button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+    <script>
+        async function removeDuplicates() {
+            const fileInput = document.getElementById('excelFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('Please select an Excel file.');
+                return;
+            }
+
+            const fileReader = new FileReader();
+            fileReader.onload = function (e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];  // Taking first sheet
+                const sheet = workbook.Sheets[sheetName];
+
+                // Convert the sheet to JSON
+                const jsonData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                // Remove duplicates (Assuming rows with same values are duplicates)
+                const uniqueData = [];
+                jsonData.forEach((row) => {
+                    const rowString = JSON.stringify(row);
+                    if (!uniqueData.find((item) => JSON.stringify(item) === rowString)) {
+                        uniqueData.push(row);
+                    }
+                });
+
+                // Convert back to sheet
+                const newSheet = XLSX.utils.aoa_to_sheet(uniqueData);
+
+                // Create new workbook and save
+                const newWorkbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(newWorkbook, newSheet, "Cleaned Data");
+
+                // Save the workbook
+                const newExcelFile = XLSX.write(newWorkbook, { bookType: 'xlsx', type: 'binary' });
+                const blob = new Blob([s2ab(newExcelFile)], { type: 'application/octet-stream' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'cleaned_excel_file.xlsx';
+                a.click();
+
+                // Show success popup
+                const popup = document.getElementById('successPopup');
+                const message = document.getElementById('popupMessage');
+                message.textContent = 'Duplicates Removed! Your new file is "cleaned_excel_file.xlsx".';
+                popup.style.display = 'block';
+            };
+
+            fileReader.readAsArrayBuffer(file);
+        }
+
+        // Convert binary string to array buffer
+        function s2ab(s) {
+            const buf = new ArrayBuffer(s.length);
+            const view = new Uint8Array(buf);
+            for (let i = 0; i < s.length; i++) {
+                view[i] = s.charCodeAt(i) & 0xFF;
+            }
+            return buf;
+        }
+
+        function closePopup() {
+            const popup = document.getElementById('successPopup');
+            popup.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
