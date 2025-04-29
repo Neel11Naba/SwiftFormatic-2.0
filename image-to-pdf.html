@@ -1,22 +1,77 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Image to PDF Converter</title>
+    <title>Image to PDF - SwiftFormatic 2.0</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="tool-page">
     <header>
         <h1>Image to PDF Converter</h1>
     </header>
-    <div class="content">
-        <p>Select an image to convert it to a PDF.</p>
-        <!-- Form for converting image to PDF -->
-        <input type="file" id="imageInput" accept="image/*">
-        <button id="convertButton">Convert</button>
-    </div>
-    <script src="script.js"></script>
+
+    <main>
+        <section class="tool-container">
+            <input type="file" id="imageUpload" accept="image/*" multiple>
+            <button onclick="convertToPDF()">Convert to PDF</button>
+            <br><br>
+            <a id="downloadLink" style="display:none;">Download PDF</a>
+        </section>
+    </main>
+
+    <footer>
+        <p>SwiftFormatic 2.0 &copy; 2025. All rights reserved.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        async function convertToPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            const files = document.getElementById('imageUpload').files;
+
+            if (files.length === 0) {
+                alert('Please select images first.');
+                return;
+            }
+
+            for (let i = 0; i < files.length; i++) {
+                const imgFile = files[i];
+                const imgData = await toBase64(imgFile);
+
+                const img = new Image();
+                img.src = imgData;
+
+                await new Promise(resolve => {
+                    img.onload = () => {
+                        const imgWidth = pdf.internal.pageSize.getWidth();
+                        const imgHeight = (img.height * imgWidth) / img.width;
+                        pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+                        if (i < files.length - 1) {
+                            pdf.addPage();
+                        }
+                        resolve();
+                    }
+                });
+            }
+
+            const pdfBlob = pdf.output('blob');
+            const downloadLink = document.getElementById('downloadLink');
+            downloadLink.href = URL.createObjectURL(pdfBlob);
+            downloadLink.download = 'converted.pdf';
+            downloadLink.style.display = 'inline-block';
+            downloadLink.textContent = 'Download PDF';
+        }
+
+        function toBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+    </script>
 </body>
 </html>
