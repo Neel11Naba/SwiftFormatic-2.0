@@ -1,22 +1,67 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF to Word Converter</title>
+    <title>PDF to Word - SwiftFormatic 2.0</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="tool-page">
     <header>
         <h1>PDF to Word Converter</h1>
     </header>
-    <div class="content">
-        <p>Select a PDF to convert it to Word.</p>
-        <!-- Form for converting PDF to Word -->
-        <input type="file" id="pdfInput" accept=".pdf">
-        <button id="convertButton">Convert</button>
-    </div>
-    <script src="script.js"></script>
+
+    <main>
+        <section class="tool-container">
+            <input type="file" id="pdfUpload" accept="application/pdf">
+            <button onclick="convertPDFtoWord()">Convert to Word</button>
+            <br><br>
+            <a id="downloadLink" style="display:none;">Download Word File</a>
+        </section>
+    </main>
+
+    <footer>
+        <p>SwiftFormatic 2.0 &copy; 2025. All rights reserved.</p>
+    </footer>
+
+    <script src="https://unpkg.com/pdfjs-dist/build/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.4.2/mammoth.browser.min.js"></script>
+
+    <script>
+        function convertPDFtoWord() {
+            const fileInput = document.getElementById('pdfUpload');
+            const file = fileInput.files[0];
+
+            if (!file) {
+                alert('Please select a PDF file.');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function(event) {
+                const typedarray = new Uint8Array(event.target.result);
+
+                const pdf = await pdfjsLib.getDocument({ data: typedarray }).promise;
+                let text = '';
+
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    const page = await pdf.getPage(pageNum);
+                    const content = await page.getTextContent();
+                    content.items.forEach(function(item) {
+                        text += item.str + ' ';
+                    });
+                    text += '\n\n';
+                }
+
+                const blob = new Blob([text], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+                const downloadLink = document.getElementById('downloadLink');
+                downloadLink.href = URL.createObjectURL(blob);
+                downloadLink.download = 'converted.docx';
+                downloadLink.style.display = 'inline-block';
+                downloadLink.textContent = 'Download Word File';
+            };
+            reader.readAsArrayBuffer(file);
+        }
+    </script>
 </body>
 </html>
